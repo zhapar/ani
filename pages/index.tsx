@@ -1,15 +1,30 @@
-import Link from 'next/link'
-import Layout from '../components/Layout'
+import { getLayout } from 'components/Layout'
+import AnimeList from 'features/Anime'
+import { dehydrate, QueryClient } from 'react-query'
+import { request } from 'libs/fetcher'
 
-const IndexPage = () => (
-  <Layout title="Home | Next.js + TypeScript Example">
-    <h1>Hello Next.js 👋</h1>
-    <p>
-      <Link href="/about">
-        <a>About</a>
-      </Link>
-    </p>
-  </Layout>
-)
+export async function getStaticProps() {
+  const queryClient = new QueryClient()
 
-export default IndexPage
+  await queryClient.prefetchInfiniteQuery(
+    ['animes', { formats: '', genres: '', title: '', year: '' }],
+    () => request('/anime')
+  )
+
+  return {
+    props: {
+      dehydratedState: JSON.parse(JSON.stringify(dehydrate(queryClient))),
+    },
+  }
+}
+function HomePage() {
+  return (
+    <div className="container">
+      <AnimeList />
+    </div>
+  )
+}
+
+export default HomePage
+
+HomePage.getLayout = getLayout
